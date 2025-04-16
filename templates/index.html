@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome to Cafe Order System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="navbar">
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('menu') }}">Menu</a>
+        <a href="{{ url_for('orders') }}">Orders</a>
+        <a href="{{ url_for('add_item') }}">Add Item</a>
+        {% if 'username' in session %}
+        <a href="{{ url_for('logout') }}">Logout ({{ session['username'] }})</a>
+        {% else %}
+        <a href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+    </div>
+    <div class="landing-container">
+        <h1>Welcome to Our Cafe!</h1>
+        <p>Order your favorite coffee and pastries with ease.</p>
+        {% if 'username' in session and session['role'] in ['customer', 'staff'] %}
+        <a href="{{ url_for('menu') }}">View Menu & Place Order</a>
+        {% elif 'username' in session and session['role'] == 'manager' %}
+        <a href="{{ url_for('add_item') }}">Add Menu Item</a>
+        {% endif %}
+    </div>
+</body>
+</html>

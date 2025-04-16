@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}{% endblock %} - Cafe Order System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="navbar">
+        {% if request.path.startswith('/management') %}
+            <!-- Management Navigation -->
+            <a href="{{ url_for('management_orders') }}">Orders</a>
+            <a href="{{ url_for('management_add_item') }}">Add Item</a>
+            <a href="{{ url_for('customer_index') }}">Switch to Customer View</a>
+        {% else %}
+            <!-- Customer Navigation -->
+            <a href="{{ url_for('customer_index') }}">Home</a>
+            <a href="{{ url_for('customer_menu') }}">Menu</a>
+            <a href="{{ url_for('management_orders') }}">Staff Login</a>
+        {% endif %}
+    </div>
+    {% block content %}{% endblock %}
+    {% block scripts %}{% endblock %}
+</body>
+</html>

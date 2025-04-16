@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Orders - Cafe Order System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="navbar">
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('menu') }}">Menu</a>
+        <a href="{{ url_for('orders') }}">Orders</a>
+        <a href="{{ url_for('add_item') }}">Add Item</a>
+        {% if 'username' in session %}
+        <a href="{{ url_for('logout') }}">Logout ({{ session['username'] }})</a>
+        {% else %}
+        <a href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+    </div>
+    <div class="container mt-4">
+        <h1 class="text-center mb-4">Orders</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Filter and Search -->
+        <form method="GET" class="row g-3 mb-3">
+            <div class="col-md-4">
+                <select name="filter_status" class="form-select" onchange="this.form.submit()">
+                    <option value="All" {% if not filter_status or filter_status == "All" %}selected{% endif %}>All</option>
+                    <option value="Waiting/Pending" {% if filter_status == "Waiting/Pending" %}selected{% endif %}>Waiting/Pending</option>
+                    <option value="Ready" {% if filter_status == "Ready" %}selected{% endif %}>Ready</option>
+                    <option value="Served" {% if filter_status == "Served" %}selected{% endif %}>Served</option>
+                    <option value="Paid" {% if filter_status == "Paid" %}selected{% endif %}>Paid</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input type="text" name="search" class="form-control" value="{{ search_query }}" placeholder="Search by customer name..." onchange="this.form.submit()">
+            </div>
+        </form>
+
+        <!-- Orders Table -->
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Total Price</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.order_id }}</td>
+                    <td>{{ order.customer_name }}</td>
+                    <td>{{ order.items | map('attr', 'name') | join(', ') }}</td>
+                    <td>${{ "%.2f" | format(order.total_price) }}</td>
+                    <td>{{ order.status }}</td>
+                    <td>
+                        {% if role == 'manager' %}
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="order_id" value="{{ order.order_id }}">
+                            <input type="hidden" name="action" value="update_status">
+                            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="Waiting/Pending" {% if order.status == "Waiting/Pending" %}selected{% endif %}>Waiting/Pending</option>
+                                <option value="Ready" {% if order.status == "Ready" %}selected{% endif %}>Ready</option>
+                                <option value="Served" {% if order.status == "Served" %}selected{% endif %}>Served</option>
+                                <option value="Paid" {% if order.status == "Paid" %}selected{% endif %}>Paid</option>
+                            </select>
+                        </form>
+                        {% endif %}
+                        <form method="POST" style="display:inline;" class="ms-2">
+                            <input type="hidden" name="order_id" value="{{ order.order_id }}">
+                            <input type="hidden" name="action" value="delete_order">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('orders', page=p, filter_status=filter_status, search=search_query) }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </nav>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
