@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cafe Menu - Cafe Order System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <div class="navbar">
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('menu') }}">Menu</a>
+        <a href="{{ url_for('orders') }}">Orders</a>
+        <a href="{{ url_for('add_item') }}">Add Item</a>
+        {% if 'username' in session %}
+        <a href="{{ url_for('logout') }}">Logout ({{ session['username'] }})</a>
+        {% else %}
+        <a href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+    </div>
+    <div class="container mt-4">
+        <h1 class="text-center mb-4">Cafe Menu</h1>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if role in ['customer', 'staff'] %}
+        <form method="POST" class="mb-4">
+            <div class="row g-3">
+                <div class="col-md-6 offset-md-3">
+                    <label for="customer_name" class="form-label">Customer Name (defaults to your username):</label>
+                    <input type="text" name="customer_name" class="form-control" value="{{ current_user }}" placeholder="{{ current_user }}">
+                </div>
+            </div>
+
+            <div class="accordion mt-4" id="menuAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingFood">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFood" aria-expanded="true" aria-controls="collapseFood">
+                            <i class="fas fa-hamburger me-2"></i> Food
+                        </button>
+                    </h2>
+                    <div id="collapseFood" class="accordion-collapse collapse show" aria-labelledby="headingFood" data-bs-parent="#menuAccordion">
+                        <div class="accordion-body">
+                            {% for i, item in enumerate(menu) if item.category == "Food" %}
+                            <div class="menu-item d-flex align-items-center mb-2">
+                                <input type="checkbox" name="items" value="{{ i }}" {% if not item.available %}disabled{% endif %} class="form-check-input me-2">
+                                <i class="fas fa-bread-slice me-2"></i>
+                                <strong>{{ item.name }}</strong> - ${{ "%.2f" | format(item.price) }}
+                                <div class="ms-auto">
+                                    <span class="badge bg-{% if item.available %}success{% else %}danger{% endif %}">
+                                        {{ "Available" if item.available else "Out of Stock" }} (Stock: {{ item.stock }})
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingDrinks">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDrinks" aria-expanded="false" aria-controls="collapseDrinks">
+                            <i class="fas fa-glass-martini me-2"></i> Drinks
+                        </button>
+                    </h2>
+                    <div id="collapseDrinks" class="accordion-collapse collapse" aria-labelledby="headingDrinks" data-bs-parent="#menuAccordion">
+                        <div class="accordion-body">
+                            {% for i, item in enumerate(menu) if item.category == "Drinks" %}
+                            <div class="menu-item d-flex align-items-center mb-2">
+                                <input type="checkbox" name="items" value="{{ i }}" {% if not item.available %}disabled{% endif %} class="form-check-input me-2">
+                                <i class="fas fa-wine-glass me-2"></i>
+                                <strong>{{ item.name }}</strong> - ${{ "%.2f" | format(item.price) }}
+                                <div class="ms-auto">
+                                    <span class="badge bg-{% if item.available %}success{% else %}danger{% endif %}">
+                                        {{ "Available" if item.available else "Out of Stock" }} (Stock: {{ item.stock }})
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingHotDrinks">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHotDrinks" aria-expanded="false" aria-controls="collapseHotDrinks">
+                            <i class="fas fa-mug-hot me-2"></i> Hot Drinks
+                        </button>
+                    </h2>
+                    <div id="collapseHotDrinks" class="accordion-collapse collapse" aria-labelledby="headingHotDrinks" data-bs-parent="#menuAccordion">
+                        <div class="accordion-body">
+                            {% for i, item in enumerate(menu) if item.category == "Hot Drinks" %}
+                            <div class="menu-item d-flex align-items-center mb-2">
+                                <input type="checkbox" name="items" value="{{ i }}" {% if not item.available %}disabled{% endif %} class="form-check-input me-2">
+                                <i class="fas fa-coffee me-2"></i>
+                                <strong>{{ item.name }}</strong> - ${{ "%.2f" | format(item.price) }}
+                                <div class="ms-auto">
+                                    <span class="badge bg-{% if item.available %}success{% else %}danger{% endif %}">
+                                        {{ "Available" if item.available else "Out of Stock" }} (Stock: {{ item.stock }})
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingJuice">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseJuice" aria-expanded="false" aria-controls="collapseJuice">
+                            <i class="fas fa-glass-whiskey me-2"></i> Juice
+                        </button>
+                    </h2>
+                    <div id="collapseJuice" class="accordion-collapse collapse" aria-labelledby="headingJuice" data-bs-parent="#menuAccordion">
+                        <div class="accordion-body">
+                            {% for i, item in enumerate(menu) if item.category == "Juice" %}
+                            <div class="menu-item d-flex align-items-center mb-2">
+                                <input type="checkbox" name="items" value="{{ i }}" {% if not item.available %}disabled{% endif %} class="form-check-input me-2">
+                                <i class="fas fa-lemon me-2"></i>
+                                <strong>{{ item.name }}</strong> - ${{ "%.2f" | format(item.price) }}
+                                <div class="ms-auto">
+                                    <span class="badge bg-{% if item.available %}success{% else %}danger{% endif %}">
+                                        {{ "Available" if item.available else "Out of Stock" }} (Stock: {{ item.stock }})
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-3">
+                <button type="submit" class="btn btn-primary">Place Order</button>
+            </div>
+        </form>
+        {% else %}
+        <div class="accordion mt-4" id="menuAccordionManager">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingFoodManager">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFoodManager" aria-expanded="true" aria-controls="collapseFoodManager">
+                        <i class="fas fa-hamburger me-2"></i> Food
+                    </button>
+                </h2>
+                <div id="collapseFoodManager" class="accordion-collapse collapse show" aria-labelledby="headingFoodManager" data-bs-parent="#menuAccordionManager">
+                    <div class="accordion-body">
+                        {% for item in menu if item.category == "Food" %}
+                        <div class="menu-item d-flex align-items-center mb-2">
+                            <i class="fas fa-bread-slice me-2"></i>
+                            <strong>{{ item.name }}</strong> - ${{ "%.2f" | format(item.price) }}
+                            <div class="ms-auto">
+                                <span class="badge bg-{% if item.available %}success{% else %}danger{% endif %}">
+                                    {{ "Available" if item.available else "Out of Stock" }} (Stock: {{ item.stock }})
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingDrinksManager">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDrinksManager" aria-expanded="false" aria-controls="collapseDrinksManager">
+                        <i class="fas fa-glass-martini me-2"></i> Drinks
+                    </button>
+                </h2>
+                <div id="collapseDrinksManager" class="accordion-collapse collapse" aria-labelledby="headingDrinksManager" data-bs-parent="#menuAccordionManager">
+                    <div class="accordion-body">
+                        {% for item in menu if item.category == "Drinks" %}
+                        <div class="menu-item d-flex align-items-center mb-2">
+                            <i class="fas fa-wine-glass me-2"></i>
+                            <strong>{{ item.name }}</strong> - ${{ "%.2f" | format(item.price) }}
+                            <div class="ms-auto">
+                                <span class="badge bg-{% if item.available %}success{% else %}danger{% endif %}">
+                                    {{ "Available" if item.available else "Out of Stock" }} (Stock: {{ item.stock }})
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingHotDrinksManager">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHotDrinksManager" aria-expanded="false" aria-controls="collapseHotDrinksManager">
+                        <i class="fas fa-mug-hot me-2"></i> Hot Drinks
+                    </button>
+                </h2>
+                <div id="collapseHotDrinksManager" class="accordion-collapse collapse" aria-labelledby="headingHotDrinksManager" data-bs-parent="#menuAccordionManager">
+                    <div class="accordion-body">
+                        {% for item in menu if item.category == "Hot Drinks" %}
+                        <div class="menu-item d-flex align-items-center mb-2">
+                            <i class="fas fa-coffee me-2"></i>
+                            <strong>{{ item.name }}</strong> - ${{ "%.2f" | format(item.price) }}
+                            <div class="ms-auto">
+                                <span class="badge bg-{% if item.available %}success{% else %}danger{% endif %}">
+                                    {{ "Available" if item.available else "Out of Stock" }} (Stock: {{ item.stock }})
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingJuiceManager">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseJuiceManager" aria-expanded="false" aria-controls="collapseJuiceManager">
+                        <i class="fas fa-glass-whiskey me-2"></i> Juice
+                    </button>
+                </h2>
+                <div id="collapseJuiceManager" class="accordion-collapse collapse" aria-labelledby="headingJuiceManager" data-bs-parent="#menuAccordionManager">
+                    <div class="accordion-body">
+                        {% for item in menu if item.category == "Juice" %}
+                        <div class="menu-item d-flex align-items-center mb-2">
+                            <i class="fas fa-lemon me-2"></i>
+                            <strong>{{ item.name }}</strong> - ${{ "%.2f" | format(item.price) }}
+                            <div class="ms-auto">
+                                <span class="badge bg-{% if item.available %}success{% else %}danger{% endif %}">
+                                    {{ "Available" if item.available else "Out of Stock" }} (Stock: {{ item.stock }})
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="text-center mt-3">Managers can view the menu but cannot place orders.</p>
+        <a href="{{ url_for('add_item') }}" class="btn btn-primary manager-btn mt-3">Add New Item</a>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
