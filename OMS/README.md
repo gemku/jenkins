@@ -64,8 +64,3 @@ The application will be available at `http://localhost:5000`.
 - Place orders by selecting items from the menu.
 - View and download receipts for completed orders.
 
-## Contributing
-Contributions are welcome! Please submit a pull request or open an issue for any suggestions or improvements.
-
-## License
-This project is licensed under the MIT License. See the LICENSE file for details.
